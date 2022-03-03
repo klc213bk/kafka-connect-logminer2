@@ -151,7 +151,7 @@ public class LogMinerThread2 implements Runnable {
 						Timestamp commitTimeStamp=logMinerData.getTimestamp(COMMIT_TIMESTAMP_FIELD);
 						Long commitScn=logMinerData.getLong(COMMIT_SCN_FIELD);
 						String rowId=logMinerData.getString(ROW_ID_FIELD);
-						//#log.info(operation+"-"+xid+"-"+scn);
+//						log.info(">>>>>" + operation+"-"+xid+"-"+scn);
 
 						if (operation.equals(OPERATION_COMMIT)){
 							transaction = trnCollection.get(xid);            
@@ -189,26 +189,26 @@ public class LogMinerThread2 implements Runnable {
 									row.setCommitScn(commitScn);
 									ix++;
 									if (ix % 10000 == 0) log.info(String.format("Fetched %s rows from db:%s ",ix,dbNameAlias)+" "+sequence+" "+oldSequence+" "+row.getScn()+" "+row.getCommitScn()+" "+row.getCommitTimestamp());
-									//log.info(row.getScn()+"-"+row.getCommitScn()+"-"+row.getTimestamp()+"-"+"-"+row.getCommitTimestamp()+"-"+row.getXid()+"-"+row.getSegName()+"-"+row.getRowId()+"-"+row.getOperation());                    
+									log.info(row.getScn()+"-"+row.getCommitScn()+"-"+row.getTimestamp()+"-"+"-"+row.getCommitTimestamp()+"-"+row.getXid()+"-"+row.getSegName()+"-"+row.getRowId()+"-"+row.getOperation());                    
 									try {									
 //										log.info(">>>>>before sourceRecordMq , now={}", new Timestamp(System.currentTimeMillis()));
 										
 										SourceRecord sourceRecord = createRecords(row);
 										
+										log.info(" >>>>heartbeat table={}, segname={}", config.getHeartbeatTable(), row.getSegName());
 										// update streaming health table
-										if (config.getHeartbeatTable().equals(row.getSegName())) {
-//											log.info(" >>>>heartbeat table={}, segname={}", config.getHeartbeatTable(), row.getSegName());
-//											
+										if (config.getHeartbeatTable().equals(row.getSegName())) {			
 											try {
 //												conn = new OracleConnection2().connect(config);
 												Struct dataStruct = dataSchemaStruct.getDataStruct();
 												Timestamp heartbeatTime = (Timestamp)dataStruct.get("HEARTBEAT_TIME");
-//												log.info(">>>>>scn={}, heartbeatTime={}", scn, heartbeatTime);
-												OracleSqlUtils2.updateLogminerReceived(dbConn, scn, heartbeatTime, config.getLogminerClient());
+												log.info(">>>>>scn={}, heartbeatTime={}", row.getScn(), heartbeatTime);
+												OracleSqlUtils2.updateLogminerReceived(dbConn, row.getScn(), heartbeatTime, config.getLogminerClient());
 											} catch (Exception e) {
 												log.error(">>>>> error msg={}, stacetrace={}", ExceptionUtils.getMessage(e), ExceptionUtils.getStackTrace(e));
 											} 
 										}	
+										log.info(">>>>> put into sourceRecordMq");
 										sourceRecordMq.offer(sourceRecord); 
 //										log.info(">>>>>after sourceRecordMq, now={}", new Timestamp(System.currentTimeMillis()));
 										

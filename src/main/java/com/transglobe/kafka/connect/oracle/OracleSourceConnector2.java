@@ -42,7 +42,7 @@ public class OracleSourceConnector2 extends SourceConnector {
   }
 
   @Override
-  public List<Map<String, String>> taskConfigs(int i) {
+  public List<Map<String, String>> taskConfigs(int maxTasks) {
     //TODO: Define the individual task configurations that will be executed.
     ArrayList<Map<String,String>> configs = new ArrayList<>(1);
     configs.add(config.originalsStrings());
