@@ -150,7 +150,7 @@ public class OracleSqlUtils2 {
 			cstmt.setTimestamp(1, heartbeat);
 			cstmt.setLong(2, scn);
 			cstmt.setTimestamp(3, new Timestamp(System.currentTimeMillis()));
-			cstmt.setString(4,  logminerClient);
+			cstmt.setString(4,  logminerClient + " " + scn);
 			cstmt.executeUpdate();
 			cstmt.close();
 

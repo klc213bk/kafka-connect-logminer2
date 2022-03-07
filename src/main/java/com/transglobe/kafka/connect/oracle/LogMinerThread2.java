@@ -21,6 +21,7 @@ import static com.transglobe.kafka.connect.oracle.OracleConnectorSchema.POSITION
 import static com.transglobe.kafka.connect.oracle.OracleConnectorSchema.ROLLBACK_FIELD;
 import static com.transglobe.kafka.connect.oracle.OracleConnectorSchema.ROWID_POSITION_FIELD;
 import static com.transglobe.kafka.connect.oracle.OracleConnectorSchema.ROW_ID_FIELD;
+//import static com.transglobe.kafka.connect.oracle.OracleConnectorSchema.CONNECTOR_FIELD;
 import static com.transglobe.kafka.connect.oracle.OracleConnectorSchema.SCN_FIELD;
 import static com.transglobe.kafka.connect.oracle.OracleConnectorSchema.SEG_OWNER_FIELD;
 import static com.transglobe.kafka.connect.oracle.OracleConnectorSchema.SQL_REDO_FIELD;
@@ -49,6 +50,7 @@ import java.util.concurrent.BlockingQueue;
 
 import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.lang3.exception.ExceptionUtils;
+import org.apache.kafka.connect.data.Schema;
 import org.apache.kafka.connect.data.Struct;
 import org.apache.kafka.connect.source.SourceRecord;
 import org.slf4j.Logger;
@@ -192,22 +194,30 @@ public class LogMinerThread2 implements Runnable {
 									log.info(row.getScn()+"-"+row.getCommitScn()+"-"+row.getTimestamp()+"-"+"-"+row.getCommitTimestamp()+"-"+row.getXid()+"-"+row.getSegName()+"-"+row.getRowId()+"-"+row.getOperation());                    
 									try {									
 //										log.info(">>>>>before sourceRecordMq , now={}", new Timestamp(System.currentTimeMillis()));
-										
-										SourceRecord sourceRecord = createRecords(row);
-										
-										log.info(" >>>>heartbeat table={}, segname={}", config.getHeartbeatTable(), row.getSegName());
-										// update streaming health table
+										SourceRecord sourceRecord = null;
 										if (config.getHeartbeatTable().equals(row.getSegName())) {			
 											try {
 //												conn = new OracleConnection2().connect(config);
+												sourceRecord = createHeartbeatRecords(row);
+												
 												Struct dataStruct = dataSchemaStruct.getDataStruct();
 												Timestamp heartbeatTime = (Timestamp)dataStruct.get("HEARTBEAT_TIME");
-												log.info(">>>>>scn={}, heartbeatTime={}", row.getScn(), heartbeatTime);
-												OracleSqlUtils2.updateLogminerReceived(dbConn, row.getScn(), heartbeatTime, config.getLogminerClient());
+												log.info("#### connector={}, scn={}, heartbeatTime={}", config.getName(), row.getScn(), heartbeatTime);
+												OracleSqlUtils2.updateLogminerReceived(dbConn, row.getScn(), heartbeatTime, config.getName());
+												topicName = row.getTopic() + "." + StringUtils.upperCase(config.getName());
+												
 											} catch (Exception e) {
 												log.error(">>>>> error msg={}, stacetrace={}", ExceptionUtils.getMessage(e), ExceptionUtils.getStackTrace(e));
 											} 
-										}	
+										} else {
+											topicName = StringUtils.upperCase(row.getTopic());
+											sourceRecord = createRecords(row);
+											
+											// update streaming health table
+											
+										}
+										log.info(" >>>>heartbeat table={}, segname={}", config.getHeartbeatTable(), row.getSegName());
+										
 										log.info(">>>>> put into sourceRecordMq");
 										sourceRecordMq.offer(sourceRecord); 
 //										log.info(">>>>>after sourceRecordMq, now={}", new Timestamp(System.currentTimeMillis()));
@@ -321,15 +331,21 @@ public class LogMinerThread2 implements Runnable {
 		log.info("Logminer Thread shutdown called");
 		this.closed=true;    
 	}
-
+	private SourceRecord createHeartbeatRecords(DMLRow dmlRow) throws Exception{
+		dataSchemaStruct = utils.createDataSchema(dmlRow.getSegOwner(), dmlRow.getSegName(), dmlRow.getSqlRedo(),dmlRow.getOperation());
+		if (dmlRow.getOperation().equals(OPERATION_DDL)) dmlRow.setSegName(DDL_TOPIC_POSTFIX);
+		return new SourceRecord(sourcePartition(), sourceOffset(dmlRow.getScn(),dmlRow.getCommitScn(),dmlRow.getRowId()), dmlRow.getTopic(),  Schema.STRING_SCHEMA, config.getName(), dataSchemaStruct.getDmlRowSchema(), setValueV2(dmlRow,dataSchemaStruct));
+	}
 	private SourceRecord createRecords(DMLRow dmlRow) throws Exception{
 		dataSchemaStruct = utils.createDataSchema(dmlRow.getSegOwner(), dmlRow.getSegName(), dmlRow.getSqlRedo(),dmlRow.getOperation());
 		if (dmlRow.getOperation().equals(OPERATION_DDL)) dmlRow.setSegName(DDL_TOPIC_POSTFIX);
-		return new SourceRecord(sourcePartition(), sourceOffset(dmlRow.getScn(),dmlRow.getCommitScn(),dmlRow.getRowId()), dmlRow.getTopic(),  dataSchemaStruct.getDmlRowSchema(), setValueV2(dmlRow,dataSchemaStruct));
+		return new SourceRecord(sourcePartition(), sourceOffset(dmlRow.getScn(),dmlRow.getCommitScn(),dmlRow.getRowId()), dmlRow.getTopic(), dataSchemaStruct.getDmlRowSchema(), setValueV2(dmlRow,dataSchemaStruct));
 	}
 
 	private Map<String,String> sourcePartition(){
-		return Collections.singletonMap(LOG_MINER_OFFSET_FIELD, dbNameAlias);
+		String logminerOffsetField = config.getName();
+//		return Collections.singletonMap(LOG_MINER_OFFSET_FIELD, dbNameAlias);
+		return Collections.singletonMap(logminerOffsetField, dbNameAlias);
 	}
 
 	private Map<String,String> sourceOffset(Long scnPosition,Long commitScnPosition,String rowId){
@@ -343,6 +359,7 @@ public class LogMinerThread2 implements Runnable {
 
 	private Struct setValueV2(DMLRow row,DataSchemaStruct dataSchemaStruct) {    
 		Struct valueStruct = new Struct(dataSchemaStruct.getDmlRowSchema())
+//				.put(CONNECTOR_FIELD, config.getName())
 				.put(SCN_FIELD, row.getScn())
 				.put(COMMIT_SCN_FIELD, row.getCommitScn())
 				.put(ROW_ID_FIELD, row.getRowId())

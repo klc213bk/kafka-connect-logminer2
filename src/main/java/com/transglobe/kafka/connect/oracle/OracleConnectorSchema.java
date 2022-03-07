@@ -14,6 +14,7 @@ public class OracleConnectorSchema{
     public static final Schema EMPTY_SCHEMA = SchemaBuilder.struct().optional().build();
 
     public static final String DML_ROW_SCHEMA_NAME ="DML_ROW";
+//    public static final String CONNECTOR_FIELD ="CONNECTOR";
     public static final String SCN_FIELD ="SCN";
     public static final String COMMIT_SCN_FIELD ="COMMIT_SCN";
     public static final String OWNER_FIELD ="OWNER";

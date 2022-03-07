@@ -131,7 +131,9 @@ public class OracleSourceTask2 extends SourceTask {
 			logMinerStartScr=logMinerStartScr+(oraDeSupportCM ? logMinerOptionsDeSupportCM : logMinerOptions)+") \n; end;";
 			//logMinerStartScr=logMinerStartScr+logMinerOptions+") \n; end;";
 			logMinerStartStmt=dbConn.prepareCall(logMinerStartScr);
-			Map<String,Object> offset = context.offsetStorageReader().offset(Collections.singletonMap(LOG_MINER_OFFSET_FIELD, dbName));
+			String logminerOffsetField = config.getName();
+//			Map<String,Object> offset = context.offsetStorageReader().offset(Collections.singletonMap(LOG_MINER_OFFSET_FIELD, dbName));
+			Map<String,Object> offset = context.offsetStorageReader().offset(Collections.singletonMap(logminerOffsetField, dbName));
 			streamOffsetScn=0L;
 			streamOffsetCommitScn=0L;
 			streamOffsetRowId="";
