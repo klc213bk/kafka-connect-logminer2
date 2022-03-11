@@ -19,7 +19,7 @@ import static com.transglobe.kafka.connect.oracle.OracleConnectorSchema.OPERATIO
 import static com.transglobe.kafka.connect.oracle.OracleConnectorSchema.OPERATION_UPDATE;
 import static com.transglobe.kafka.connect.oracle.OracleConnectorSchema.OPTIONAL_TIMESTAMP_SCHEMA;
 import static com.transglobe.kafka.connect.oracle.OracleConnectorSchema.PK_COLUMN_FIELD;
-//import static com.transglobe.kafka.connect.oracle.OracleConnectorSchema.CONNECTOR_FIELD;
+import static com.transglobe.kafka.connect.oracle.OracleConnectorSchema.CONNECTOR_FIELD;
 import static com.transglobe.kafka.connect.oracle.OracleConnectorSchema.SCN_FIELD;
 import static com.transglobe.kafka.connect.oracle.OracleConnectorSchema.COMMIT_SCN_FIELD;
 import static com.transglobe.kafka.connect.oracle.OracleConnectorSchema.ROW_ID_FIELD;
@@ -416,7 +416,7 @@ public class OracleSourceConnectorUtils2{
       }
       Schema newSchema = SchemaBuilder.struct()
                   .name(preSchemaName)
-//                  .field(CONNECTOR_FIELD, Schema.STRING_SCHEMA)
+                  .field(CONNECTOR_FIELD, Schema.STRING_SCHEMA)
                   .field(SCN_FIELD, Schema.INT64_SCHEMA)
                   .field(COMMIT_SCN_FIELD, Schema.INT64_SCHEMA)
                   .field(ROW_ID_FIELD, Schema.STRING_SCHEMA)

@@ -118,22 +118,24 @@ public class OracleSqlUtils2 {
         ps.close();
         return currentScn;
     }    
-    public static void insertOffSet(Connection conn, boolean resetOffset, Long startScn, Long offsetScn, Long offsetCommitScn,String offsetRowId, boolean isOk) throws SQLException{
+    public static void insertOffSet(Connection conn, String connector, String applySync, boolean resetOffset, Long startScn, Long offsetScn, Long offsetCommitScn,String offsetRowId, boolean isOk) throws SQLException{
 		PreparedStatement pstmt = null;
 		String sql = null;
 		try {
-			sql = "insert into TM2_LOGMINER_OFFSET (START_TIME,RESET_OFFSET,START_SCN,OFFSET_SCN,OFFSET_COMMIT_SCN,OFFSET_ROW_ID,LOGMINER_STATUS,UPDATE_TIME) \n" + 
-					"values (?,?,?,?,?,?,?,?)";
+			sql = "insert into TM2_LOGMINER_OFFSET (START_TIME,CONNECTOR,APPLY_SYNC,RESET_OFFSET,START_SCN,OFFSET_SCN,OFFSET_COMMIT_SCN,OFFSET_ROW_ID,LOGMINER_STATUS,UPDATE_TIME) \n" + 
+					"values (?,?,?,?,?,?,?,?,?,?)";
 			Timestamp t =  new Timestamp(System.currentTimeMillis());
 			pstmt = conn.prepareStatement(sql);
 			pstmt.setTimestamp(1,t);
-			pstmt.setInt(2, (resetOffset)? 1 : 0);
-			pstmt.setLong(3, startScn);
-			pstmt.setLong(4, offsetScn);
-			pstmt.setLong(5, offsetCommitScn);
-			pstmt.setString(6, offsetRowId);
-			pstmt.setString(7, (isOk? "RUNNING" : "FAILED"));
-			pstmt.setTimestamp(8, t);
+			pstmt.setString(2, connector);
+			pstmt.setString(3, applySync);
+			pstmt.setInt(4, (resetOffset)? 1 : 0);
+			pstmt.setLong(5, startScn);
+			pstmt.setLong(6, offsetScn);
+			pstmt.setLong(7, offsetCommitScn);
+			pstmt.setString(8, offsetRowId);
+			pstmt.setString(9, (isOk? "RUNNING" : "FAILED"));
+			pstmt.setTimestamp(10, t);
 			pstmt.executeUpdate();
 			pstmt.close();
 

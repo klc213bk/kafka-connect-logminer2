@@ -21,7 +21,7 @@ import static com.transglobe.kafka.connect.oracle.OracleConnectorSchema.POSITION
 import static com.transglobe.kafka.connect.oracle.OracleConnectorSchema.ROLLBACK_FIELD;
 import static com.transglobe.kafka.connect.oracle.OracleConnectorSchema.ROWID_POSITION_FIELD;
 import static com.transglobe.kafka.connect.oracle.OracleConnectorSchema.ROW_ID_FIELD;
-//import static com.transglobe.kafka.connect.oracle.OracleConnectorSchema.CONNECTOR_FIELD;
+import static com.transglobe.kafka.connect.oracle.OracleConnectorSchema.CONNECTOR_FIELD;
 import static com.transglobe.kafka.connect.oracle.OracleConnectorSchema.SCN_FIELD;
 import static com.transglobe.kafka.connect.oracle.OracleConnectorSchema.SEG_OWNER_FIELD;
 import static com.transglobe.kafka.connect.oracle.OracleConnectorSchema.SQL_REDO_FIELD;
@@ -359,7 +359,7 @@ public class LogMinerThread2 implements Runnable {
 
 	private Struct setValueV2(DMLRow row,DataSchemaStruct dataSchemaStruct) {    
 		Struct valueStruct = new Struct(dataSchemaStruct.getDmlRowSchema())
-//				.put(CONNECTOR_FIELD, config.getName())
+				.put(CONNECTOR_FIELD, config.getName())
 				.put(SCN_FIELD, row.getScn())
 				.put(COMMIT_SCN_FIELD, row.getCommitScn())
 				.put(ROW_ID_FIELD, row.getRowId())

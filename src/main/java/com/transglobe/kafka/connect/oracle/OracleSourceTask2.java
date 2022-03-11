@@ -48,6 +48,7 @@ import org.apache.kafka.connect.source.SourceTask;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import com.fasterxml.jackson.databind.ObjectMapper;
 import com.transglobe.kafka.connect.oracle.models.Data;
 import com.transglobe.kafka.connect.oracle.models.DataSchemaStruct;
 
@@ -176,7 +177,7 @@ public class OracleSourceTask2 extends SourceTask {
 				streamOffsetScn=0L;
 				streamOffsetCommitScn=0L;
 				streamOffsetRowId="";        
-			}
+			} 
 
 			if (streamOffsetScn==0L){
 				skipRecord=false;
@@ -196,7 +197,11 @@ public class OracleSourceTask2 extends SourceTask {
 			log.info(">>>update LOGMINER_OFFSET with resetOffset={},offsetScn={},offsetCommitScn={},offsetRowId={}", config.getResetOffset(), streamOffsetScn, streamOffsetCommitScn, streamOffsetRowId);
 			Long theStartScn = StringUtils.isBlank(startSCN)? 0L : Long.valueOf(startSCN);
 			boolean runningOk = true;
-			OracleSqlUtils2.insertOffSet(dbConn, config.getResetOffset(), theStartScn, streamOffsetScn, streamOffsetCommitScn, streamOffsetRowId, runningOk);
+			
+			ObjectMapper objectMapper = new ObjectMapper();
+			String configStr = objectMapper.writeValueAsString(config.values());
+			
+			OracleSqlUtils2.insertOffSet(dbConn, config.getName(), configStr, config.getResetOffset(), theStartScn, streamOffsetScn, streamOffsetCommitScn, streamOffsetRowId, runningOk);
 			log.info(">>>update LOGMINER_OFFSET  done!!!");
 			
 			if (!oraDeSupportCM){
@@ -230,6 +235,8 @@ public class OracleSourceTask2 extends SourceTask {
 			}
 		}catch(SQLException e){
 			throw new ConnectException("Error at database tier, Please check : "+e.toString());
+		} catch(Exception e){
+			throw new ConnectException("Error , Please check : "+e.toString());
 		}
 	}    
 
